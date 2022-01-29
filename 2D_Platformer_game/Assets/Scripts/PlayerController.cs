@@ -6,14 +6,20 @@ using UnityEngine.SceneManagement;
 
 public class PlayerController : MonoBehaviour
 {
-  public LayerMask groundLayerMask;
-  public Animator animator;
-  BoxCollider2D bc;
-  public float speed;
-  public float jump;
-  public ScoreController scoreController;
-  private Rigidbody2D rb2d;
-  //Awake
+    public LayerMask groundLayerMask;
+    public Animator animator;
+    BoxCollider2D bc;
+    public float speed;
+    public float jump;
+    public ScoreController scoreController;
+    public GameOverController gameOverController;
+    private Rigidbody2D rb2d;
+    public List<GameObject> hearts;
+    public int heartcount = 3;
+    public GameObject gameOverUI;
+
+
+    //Awake
     private void Awake()
     {
         Debug.Log("Player Awake");
@@ -21,34 +27,51 @@ public class PlayerController : MonoBehaviour
         rb2d = gameObject.GetComponent<Rigidbody2D>();
     }
 
-// Player Death Logic
+    // Player Death Logic
+    public void DamagePlayer()
+    {
+        if (heartcount > 0)
+        {
+            Destroy(hearts[0]);
+            hearts.Remove(hearts[0]);
+            heartcount--;
+           
+        }
+        else
+        {
+            KillPlayer();
+        }
+    }
     public void KillPlayer()
     {
-        
-        animator.SetBool("Death",true);
-        Invoke("ReloadScene",1f);
-       
-    }
+      SoundManager.Instance.PlayMusic(Sounds.GameOver);
+        animator.SetBool("Death", true);
+      Invoke("LoadGameoverUI", 1f);
+        this.enabled = false;
+         
 
-    public void ReloadScene()
+
+    }
+    public void LoadGameoverUI()
     {
-        
-        SceneManager.LoadScene("Start");
+       gameOverUI.SetActive(true);
+      
     }
 
-// ScoreHandler
+
+
+    // ScoreHandler
     public void PickupKey()
     {
-       
-       scoreController.ScoreIncrease(10);
+
+        scoreController.ScoreIncrease(10);
     }
 
-// GroundChecker
-
-    private bool IsGrounded()
+    // GroundChecker
+    public bool IsGrounded()
     {
-       float  extraheightcheck = .1f;
-       RaycastHit2D raycastHit = Physics2D.Raycast(bc.bounds.center, Vector2.down, bc.bounds.extents.y + extraheightcheck,groundLayerMask);
+        float extraheightcheck = .1f;
+        RaycastHit2D raycastHit = Physics2D.Raycast(bc.bounds.center, Vector2.down, bc.bounds.extents.y + extraheightcheck, groundLayerMask);
         Color rayColor;
 
         if (raycastHit.collider != null)
@@ -59,13 +82,13 @@ public class PlayerController : MonoBehaviour
         {
             rayColor = Color.red;
         }
-        Debug.DrawRay(bc.bounds.center, Vector2.down*(bc.bounds.extents.y + extraheightcheck));
-        Debug.Log(raycastHit.collider);
+        Debug.DrawRay(bc.bounds.center, Vector2.down * (bc.bounds.extents.y + extraheightcheck));
+
         return raycastHit.collider != null;
 
     }
-    
-// Update
+
+    // Update
     private void Update()
     {
 
@@ -76,7 +99,7 @@ public class PlayerController : MonoBehaviour
         MoveCharacterHorizontal(horizontal);
         MoveCharacterVertical();
 
-     // Walk/Run Toggle
+        // Walk/Run Toggle
         if (Input.GetKeyDown(KeyCode.RightAlt))
         {
             animator.SetTrigger("Walk/Run Toggle");
@@ -85,9 +108,7 @@ public class PlayerController : MonoBehaviour
         PlayerCrouch();
     }
 
-
-
-// CrouchHandler
+    // CrouchHandler
     private void PlayerCrouch()
     {
         if (Input.GetKeyDown(KeyCode.LeftControl))
@@ -107,26 +128,26 @@ public class PlayerController : MonoBehaviour
             bc.offset = new Vector2(0.01137787f, 0.9694713f);
         }
     }
-//Animation Handler_Horizontal
-    private void HorizontalMovementAnimation(float horizontal )
+    //Animation Handler_Horizontal
+    private void HorizontalMovementAnimation(float horizontal)
 
-       {
-          animator.SetFloat("Speed", Mathf.Abs(horizontal));
-        
+    {
+        animator.SetFloat("Speed", Mathf.Abs(horizontal));
 
-          Vector3 scale = transform.localScale;
-          if (horizontal < 0)
-          {
+
+        Vector3 scale = transform.localScale;
+        if (horizontal < 0)
+        {
             scale.x = -1f * Mathf.Abs(scale.x);
-          }
-          else if (horizontal > 0)
-          {
-            scale.x = Mathf.Abs(scale.x);
-          }
-         transform.localScale = scale;
         }
-//Animation Handler_Vertical
-        private void VerticalMovementAnimation()
+        else if (horizontal > 0)
+        {
+            scale.x = Mathf.Abs(scale.x);
+        }
+        transform.localScale = scale;
+    }
+    //Animation Handler_Vertical
+    private void VerticalMovementAnimation()
     {
         if (Input.GetKeyDown(KeyCode.Space))
         {
@@ -142,31 +163,31 @@ public class PlayerController : MonoBehaviour
         }
     }
     // Movement Handler_Horizontal
-      private void MoveCharacterHorizontal(float horizontal)
-       {
-        
+    private void MoveCharacterHorizontal(float horizontal)
+    {
+
         Vector3 position = transform.position;
         position.x += horizontal * speed * Time.deltaTime;
         transform.position = position;
-       }
-
+        
+    }
     // Movement Handler_Vertical
-       private void MoveCharacterVertical()
-       {
-         if (IsGrounded() && Input.GetKeyDown(KeyCode.Space))
-         {
+    private void MoveCharacterVertical()
+    {
+        if (IsGrounded() && Input.GetKeyDown(KeyCode.Space))
+        {
             rb2d.AddForce(new Vector2(0f, jump), ForceMode2D.Impulse);
 
-         }
-       }
 
+        }
+    }
 
-
-      
-     
     
+
+
+
+
 }
- 
-      
-         
-        
+
+
+
